@@ -41,7 +41,7 @@ def get_ready_list_of_posts_and_indexes_facebook(file_name: str):
 
     for i in range(len(found) - 2):
         if found[i][0] != '' and found[i + 1][1] != '' and found[i + 2][2] != '':
-            posts_reactions_comments.append([clean_post(found[i][0]), found[i + 1][1], clean_comment(found[i + 2][2])])
+            posts_reactions_comments.append([clean_post(found[i][0]), found[i + 1][1], clean_for_only_numbers(found[i + 2][2])])
 
     return posts_reactions_comments
 
@@ -52,14 +52,25 @@ def clean_post(dirty_post: str) -> str:
     #print(sorted_garbage)
 
     clean_post = remove_multiple_strings(dirty_post, sorted_garbage)
-    pattern = re.compile('[^a-zA-ZąĄćĆęĘłŁńŃóÓśŚżŻźŹ1234567890.,!@:?() ]')
+    pattern1 = re.compile('[^a-zA-ZąĄćĆęĘłŁńŃóÓśŚżŻźŹ1234567890.,!@:?()/ ]')
+    pattern2 = re.compile(' +')
+    pattern3 = re.compile('/')
 
-    return pattern.sub('', clean_post)
+    first_clean = pattern1.sub('', clean_post)
+    second_clean = pattern2.sub(' ', first_clean)
+    third_clean = pattern3.sub(' ', second_clean)
+
+    return third_clean
 
 
-def clean_comment(comment: str) -> str:
+def clean_for_only_numbers(string_with_numbers: str) -> str:
     pattern = re.compile('[^1234567890]')
-    return pattern.sub('', comment)
+    return pattern.sub('', string_with_numbers)
+
+def clean_string_to_int(string_with_numbers: str) -> int:
+    pattern = re.compile('[^1234567890]')
+    number = pattern.sub('', string_with_numbers)
+    return int(number)
 
 
 def remove_multiple_strings(cur_string: str, replace_list: List[str]) -> str:
