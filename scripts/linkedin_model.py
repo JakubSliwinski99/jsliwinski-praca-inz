@@ -14,9 +14,9 @@ def get_index_prediction(text):
     df_for_text = get_mini_model_for_a_text_linkedin(text, best_post)
     # print(df_for_text)
 
-    df_linkedin = pd.read_csv('data_facebook/facebook_data.csv')
+    df_linkedin = pd.read_csv('data_linkedin/linkedin_data.csv')
 
-    mask = np.random.rand(len(df_linkedin)) < 0.8
+    mask = np.random.rand(len(df_linkedin)) < 0.85
     df_train = df_linkedin[mask]
     df_test = df_linkedin[~mask]
     # print('Training data set length='+str(len(df_train)))
