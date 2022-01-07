@@ -1,86 +1,106 @@
-import re
-import csv
-import string
-from typing import List
+import pandas as pd
+import plotly.express as px  # (version 4.7.0 or higher)
+import plotly.graph_objects as go
+from dash import Dash, dcc, html, Input, Output  # pip install dash (version 2.0.0 or higher)
+
+from scripts import facebook_model
+
+app = Dash(__name__)
+
+# -- Import and clean data (importing csv into pandas)
+
+ALLOWED_TYPES = (
+    "text", "number", "password", "email", "search",
+    "tel", "url", "range", "hidden",
+)
+
+# ------------------------------------------------------------------------------
+# App layout
+app.layout = html.Div([
+
+    html.H1("Web Application Dashboards with Dash", style={'text-align': 'center'}),
+
+    dcc.Dropdown(id="slct_portal",
+                 options=[
+                     {"label": "Facebook", "value": 0},
+                     {"label": "LinkedIn", "value": 1}],
+                 multi=False,
+                 value=0,
+                 style={'width': "40%"}
+                 ),
+
+    html.Br(),
+
+    html.Div([
+        dcc.Textarea(
+            id='my_txt_input',
+            name='text',
+            style={'width': '300px', 'height': '200px'}
+        ),
+    ]),
+
+    html.Br(),
+
+    html.Div(id='output_container', children=[])
+
+])
 
 
-def get_list_of_dirty_posts_with_reactions_likendin(file_name: str):
-    file = open(file_name, "r", encoding="utf-8")
-    text = file.read()
-    found = re.findall(r'<span dir="ltr">(.*?)</span>|social-proof-fallback-number">(.*?)</span>|counts__reactions-count">(.*?)</span>', text)
+# ------------------------------------------------------------------------------
+# Connect the Plotly graphs with Dash Components
+@app.callback(
+    [Output(component_id='output_container', component_property='children')],
+    [Input(component_id='slct_portal', component_property='value'),
+     Input(component_id='my_txt_input', component_property='value')]
+)
+def update_text(selected_portal, text):
+    print(selected_portal)
+    print(type(text))
 
-    posts_with_reactions = []
-    for i in range(len(found) - 1):
-        if found[i][0] != '':
-            if found[i + 1][1] != '':
-                posts_with_reactions.append((found[i][0], found[i + 1][1]))
-            if found[i + 1][2] != '':
-                posts_with_reactions.append((found[i][0], found[i + 1][2]))
+    result = facebook_model.get_reactions_prediction(text)
 
-    return posts_with_reactions
+    return [str(result)]
 
-
-def get_ready_list_of_posts_with_reactions_linkedin(file_name: str):
-    dirty_list_of_posts_with_reactions = get_list_of_dirty_posts_with_reactions_likendin(file_name)
-
-    final_list_of_posts_with_reactions = []
-
-    for i in range(len(dirty_list_of_posts_with_reactions)):
-        final_list_of_posts_with_reactions.append((clean_post(dirty_list_of_posts_with_reactions[i][0]), dirty_list_of_posts_with_reactions[i][1]))
-
-    return final_list_of_posts_with_reactions
-
-
-def get_ready_list_of_posts_and_indexes_facebook(file_name: str):
-    file = open(file_name, "r", encoding="utf-8")
-    text = file.read()
-
-    found = re.findall(r'<div class="kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x c1et5uql ii04i59q">(.*?)</div></div></span>|<span class="pcp91wgn">(.*?)</span>|fe6kdd0r mau55g9w c8b282yb d3f4x2em iv3no6db jq4qci2q a3bd9o3v b1v8xokw m9osqain" dir="auto">(.*?)</span>', text)
-
-    posts_reactions_comments = []
-
-    for i in range(len(found) - 2):
-        if found[i][0] != '' and found[i + 1][1] != '' and found[i + 2][2] != '':
-            posts_reactions_comments.append([clean_post(found[i][0]), found[i + 1][1], clean_for_only_numbers(found[i + 2][2])])
-
-    return posts_reactions_comments
-
-
-def clean_post(dirty_post: str) -> str:
-    found_garbage = re.findall(r"<(.*?)>", dirty_post)
-    sorted_garbage = sorted(found_garbage, key=len, reverse=True)
-    #print(sorted_garbage)
-
-    clean_post = remove_multiple_strings(dirty_post, sorted_garbage)
-    pattern1 = re.compile('[^a-zA-ZąĄćĆęĘłŁńŃóÓśŚżŻźŹ1234567890.,!@:?()/ ]')
-    pattern2 = re.compile(' +')
-    pattern3 = re.compile('/')
-
-    first_clean = pattern1.sub('', clean_post)
-    second_clean = pattern2.sub(' ', first_clean)
-    third_clean = pattern3.sub(' ', second_clean)
-
-    return third_clean
+#     container = "The year chosen by user was: {}".format(option_slctd)
+#
+#     dff = df.copy()
+#     dff = dff[dff["Year"] == option_slctd]
+#     dff = dff[dff["Affected by"] == "Varroa_mites"]
+#
+#     # Plotly Express
+#     fig = px.choropleth(
+#         data_frame=dff,
+#         locationmode='USA-states',
+#         locations='state_code',
+#         scope="usa",
+#         color='Pct of Colonies Impacted',
+#         hover_data=['State', 'Pct of Colonies Impacted'],
+#         color_continuous_scale=px.colors.sequential.YlOrRd,
+#         labels={'Pct of Colonies Impacted': '% of Bee Colonies'},
+#         template='plotly_dark'
+#     )
+#
+#     # Plotly Graph Objects (GO)
+#     # fig = go.Figure(
+#     #     data=[go.Choropleth(
+#     #         locationmode='USA-states',
+#     #         locations=dff['state_code'],
+#     #         z=dff["Pct of Colonies Impacted"].astype(float),
+#     #         colorscale='Reds',
+#     #     )]
+#     # )
+#     #
+#     # fig.update_layout(
+#     #     title_text="Bees Affected by Mites in the USA",
+#     #     title_xanchor="center",
+#     #     title_font=dict(size=24),
+#     #     title_x=0.5,
+#     #     geo=dict(scope='usa'),
+#     # )
+#
+#     return container, fig
 
 
-def clean_for_only_numbers(string_with_numbers: str) -> str:
-    pattern = re.compile('[^1234567890]')
-    return pattern.sub('', string_with_numbers)
-
-def clean_string_to_int(string_with_numbers: str) -> int:
-    pattern = re.compile('[^1234567890]')
-    number = pattern.sub('', string_with_numbers)
-    return int(number)
-
-
-def remove_multiple_strings(cur_string: str, replace_list: List[str]) -> str:
-    for cur_word in replace_list:
-        cur_string = cur_string.replace('<' + cur_word + '>', ' ')
-    return cur_string
-
-
-final_list = get_ready_list_of_posts_with_reactions_linkedin("data_linkedin/linkedin_niebezpiecznik.txt")
-for elem in final_list:
-    print(elem)
-
-print(len(final_list))
+# ------------------------------------------------------------------------------
+if __name__ == '__main__':
+    app.run_server(debug=True)
