@@ -35,7 +35,8 @@ def get_ready_list_of_posts_and_indexes_facebook(file_name: str):
     file = open(file_name, "r", encoding="utf-8")
     text = file.read()
 
-    found = re.findall(r'<div class="kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x c1et5uql ii04i59q">(.*?)</div></div></span>|<span class="pcp91wgn">(.*?)</span>|fe6kdd0r mau55g9w c8b282yb d3f4x2em iv3no6db jq4qci2q a3bd9o3v b1v8xokw m9osqain" dir="auto">(.*?)</span>', text)
+    found = re.findall(r'<div class="kvgmc6g5 cxmmr5t8 oygrvhab hcukyx3x c1et5uql ii04i59q">(.*?)</div></div></span>|<span class="pcp91wgn">(.*?)'
+                       r'</span>|fe6kdd0r mau55g9w c8b282yb d3f4x2em iv3no6db jq4qci2q a3bd9o3v b1v8xokw m9osqain" dir="auto">(.*?)</span>', text)
 
     posts_reactions_comments = []
 
@@ -49,7 +50,6 @@ def get_ready_list_of_posts_and_indexes_facebook(file_name: str):
 def clean_post(dirty_post: str) -> str:
     found_garbage = re.findall(r"<(.*?)>", dirty_post)
     sorted_garbage = sorted(found_garbage, key=len, reverse=True)
-    #print(sorted_garbage)
 
     clean_post = remove_multiple_strings(dirty_post, sorted_garbage)
     pattern1 = re.compile('[^a-zA-ZąĄćĆęĘłŁńŃóÓśŚżŻźŹ1234567890.,!@:?()/ ]')

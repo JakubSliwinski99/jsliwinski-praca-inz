@@ -75,7 +75,7 @@ def get_mini_model_for_a_text_facebook(text, best_post):
 
 def get_bayes_index_for_n_reactions(text, n_reactions):
     vec = CountVectorizer()
-    df_facebook = pd.read_csv('data_facebook/facebook_data.csv')
+    df_facebook = pd.read_csv('facebook_data.csv')
     list_preprocessed_posts = df_facebook['PREPROCESSED_POSTS']
     list_all_reactions = df_facebook['ALL_REACTIONS']
 
@@ -117,5 +117,8 @@ def get_best_post():
             best_index = i
 
     return list_posts[best_index]
+
+
+
 
 
